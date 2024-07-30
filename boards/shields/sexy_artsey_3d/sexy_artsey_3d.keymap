@@ -1,0 +1,130 @@
+/*
+ * Copyright (c) 2022 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+#include "../../../../zmk-nodefree-config/helper.h"
+// https://github.com/urob/zmk-nodefree-config
+
+&left_encoder {
+    status = "okay";
+};
+
+// CONFIG
+#define COMBO_TIMEOUT 70
+#define COMBO_LAYERS 0
+#define STICKY_TIMEOUT 500
+
+// LEFT SIDE
+#define TLI 3 // TOP INDEX
+#define TLM 2 // TOP MIDDLE
+#define TLR 1 // TOP RING
+#define TLP 0 // TOP PINKY
+#define BLI 7 // BOTTOM INDEX
+#define BLM 6 // BOTTOM MIDDLE
+#define BLR 5 // BOTTOM RING
+#define BLP 4 // BOTTOM PINKY
+#define LOT 9 // O-THUMB
+#define LIT 8 // I-THUMB
+
+&sk {
+  release-after-ms = <STICKY_TIMEOUT>;
+  quick-release;
+};
+
+#define DEF 0
+#define NAV 1
+#define SHORTCUT 2
+
+// tap ctrl many times for bootloader
+ZMK_BEHAVIOR(many_tap_bootloader, tap_dance,
+    tapping-term-ms = <200>;
+    bindings = <&m_reset>, <&none>, <&bootloader>;
+)
+
+// tap shift twice for capsword
+ZMK_BEHAVIOR(dt_capsword, tap_dance,
+    tapping-term-ms = <200>;
+    bindings = <&kp RSHIFT>, <&caps_word>;
+)
+
+// layer hold tap slow for nav/shortcut
+ZMK_BEHAVIOR(mt_s, hold_tap,
+    flavor = "balanced";
+    tapping-term-ms = <100>;
+    global-quick-tap;
+    quick-tap-ms = <100>;
+    bindings = <&mo>, <&to>;
+)
+
+// ZMK_COMBO(lay_nav,      &to NAV,           LIT,              DEF)
+// ZMK_COMBO(thumb_space,  &kp SPACE,         LOT,              DEF)
+ZMK_COMBO(mod_reset,    &m_release_mods,   BLP BLR BLM BLI,  DEF)
+
+/ {
+  combos {
+    compatible = "zmk,combos";
+    #include "taipo.dtsi"
+  };
+
+  macros {
+    m_release_mods: m_release_mods {
+      compatible = "zmk,behavior-macro";
+      #binding-cells = <0>;
+      bindings =
+        <&macro_release &kp LSHFT>,
+        <&macro_release &kp LALT>,
+        <&macro_release &kp LEFT_GUI>,
+        <&macro_release &kp LCTRL>,
+        <&macro_release &kp RSHFT>,
+        <&macro_release &kp RALT>,
+        <&macro_release &kp RIGHT_GUI>,
+        <&macro_release &kp RCTRL>;
+    };
+
+    m_reset: m_reset {
+      compatible = "zmk,behavior-macro";
+      #binding-cells = <0>;
+      bindings =
+        <&m_release_mods>,
+        <&to DEF>;
+    };
+  };
+
+  keymap {
+    compatible = "zmk,keymap";
+
+    base {
+      bindings = <
+        &none       &none        &none         &none
+        &none       &none        &none         &none
+        &mt_s NAV SHORTCUT  // inner thumb
+        &kp SPACE   // outer thumb
+        &many_tap_bootloader  // encoder push
+      >;
+      sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
+    };
+
+    nav {
+      bindings = <
+        &kp LSHIFT    &kp LALT      &kp UP        &kp DOWN
+        &kp LCMD      &kp LCTRL     &kp RIGHT     &kp LEFT
+        &to DEF       &trans        &trans
+      >;
+      sensor-bindings = <&inc_dec_kp UP DOWN>;
+    };
+
+    shortcut {
+      bindings = <
+        &kp LSHIFT    &kp LALT      &kp LC(C)      &kp LC(Z)
+        &kp LCMD      &kp LCTRL     &kp LC(V)      &kp LC(LS(Z))
+        &trans        &trans        &trans
+      >;
+      sensor-bindings = <&inc_dec_kp LEFT RIGHT>;
+    };
+  };
+};

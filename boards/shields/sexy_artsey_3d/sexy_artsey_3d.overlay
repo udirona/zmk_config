@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2021 The ZMK Contributors
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
+#include <dt-bindings/zmk/matrix_transform.h>
+
+/ {
+
+  chosen {
+    zmk,kscan = &kscan0;
+  };
+
+  kscan0: kscan_composite {
+    compatible = "zmk,kscan-composite";
+
+    rows = <3>;
+    columns = <4>;
+
+    // Include the matrix driver
+    matrix {
+      kscan = <&kscan1>;
+    };
+
+    // Include the direct GPIO driver...
+    direct {
+      kscan = <&kscan2>;
+      row-offset = <2>; // ...and shift it to not overlap
+    };
+  };
+
+  kscan1: kscan_matrix {
+    compatible = "zmk,kscan-gpio-matrix";
+    diode-direction = "col2row";
+
+    row-gpios
+    = <&xiao_d 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+    , <&xiao_d 5 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+    ;
+
+    col-gpios
+    = <&xiao_d 0 GPIO_ACTIVE_HIGH>
+    , <&xiao_d 1 GPIO_ACTIVE_HIGH>
+    , <&xiao_d 3 GPIO_ACTIVE_HIGH>
+    , <&xiao_d 2 GPIO_ACTIVE_HIGH>
+    ;
+
+  };
+
+  kscan2: kscan_direct {
+    compatible = "zmk,kscan-gpio-direct";
+
+    input-gpios
+    = <&xiao_d 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+    , <&xiao_d 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+    , <&xiao_d 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+    ;
+  };
+
+  left_encoder: encoder_left {
+    compatible = "alps,ec11";
+    a-gpios = <&xiao_d 8 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+    b-gpios = <&xiao_d 7 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+    steps = <80>;
+  };
+
+  sensors {
+    compatible = "zmk,keymap-sensors";
+    sensors = <&left_encoder>;
+    triggers-per-rotation = <30>;
+  };
+};
